@@ -1,0 +1,175 @@
+#include <iostream>
+#include <string>
+#include <stack>
+#include <queue>
+#include <limits> 
+
+using namespace std;
+
+struct Student {
+    string name;
+    float grade;
+    Student* next;
+};
+
+class StudentList {
+private:
+    Student* head;
+
+public:
+    StudentList() : head(nullptr) {}
+
+    void addStudent(const string& name, float grade) {
+        Student* newStudent = new Student{name, grade, nullptr};
+        if (!head) {
+            head = newStudent;
+        } else {
+            Student* temp = head;
+            while (temp->next) temp = temp->next;
+            temp->next = newStudent;
+        }
+    }
+    void displayStudents() const {
+        if (!head) {
+            cout << "\nNo students in the list.\n";
+            return;
+        }
+        
+        Student* temp = head;
+        cout << "\n--- Student List ---\n";
+        while (temp) {
+            cout << "Name: " << temp->name 
+                 << ", Grade: " << temp->grade << endl;
+            temp = temp->next;
+        }
+    }
+    void analyzeGrades() const {
+        if (!head) {
+            cout << "\nNo students to analyze.\n";
+            return;
+        }
+        
+        float sum = 0, maxGrade = head->grade, minGrade = head->grade;
+        int count = 0;
+        Student* temp = head;
+
+        while (temp) {
+            sum += temp->grade;
+            if (temp->grade > maxGrade) maxGrade = temp->grade;
+            if (temp->grade < minGrade) minGrade = temp->grade;
+            count++;
+            temp = temp->next;
+        }
+
+        cout << "\n--- Grade Analysis ---\n";
+        cout << "Average Grade: " << (sum / count) << endl;
+        cout << "Highest Grade: " << maxGrade << endl;
+        cout << "Lowest Grade: " << minGrade << endl;
+    }
+
+    ~StudentList() {
+        while (head) {
+            Student* temp = head;
+            head = head->next;
+            delete temp;
+        }
+    }
+};
+string getStringInput(const string& prompt) {
+    string input;
+    cout << prompt;
+    cin >> ws;
+    getline(cin, input);
+    return input;
+}
+float getFloatInput(const string& prompt) {
+    float value;
+    while (true) {
+        cout << prompt;
+        cin >> value;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Please enter a valid number.\n";
+        } else {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return value;
+        }
+    }
+}
+int getMenuChoice() {
+    int choice;
+    while (true) {
+        cout << "Enter your choice (0-5): ";
+        cin >> choice;
+        if (cin.fail() || choice < 0 || choice > 5) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid choice. Please enter a number between 0 and 5.\n";
+        } else {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return choice;
+        }
+    }
+}
+
+int main() {
+    StudentList sl;
+    stack<pair<string, float>> gradeHistory; 
+    queue<string> processingQueue;          
+
+    while (true) {
+        cout << "\n--- Grade Analysis System ---\n";
+        cout << "1. Add Student\n";
+        cout << "2. Display Students\n";
+        cout << "3. Analyze Grades\n";
+        cout << "4. Undo Last Add (Stack)\n";
+        cout << "5. Process Queue\n";
+        cout << "0. Exit\n";
+
+        int choice = getMenuChoice();
+        string name;
+        float grade;
+
+        switch (choice) {
+            case 1: {
+                name = getStringInput("Enter student name: ");
+                grade = getFloatInput("Enter grade: ");
+                sl.addStudent(name, grade);
+                gradeHistory.push({name, grade});
+                processingQueue.push(name);
+                cout << "Student added.\n";
+                break;
+            }
+            case 2:
+                sl.displayStudents();
+                break;
+            case 3:
+                sl.analyzeGrades();
+                break;
+            case 4:
+                if (!gradeHistory.empty()) {
+                    auto last = gradeHistory.top();
+                    gradeHistory.pop();
+                    cout << "Last entry removed: " << last.first 
+                         << ", Grade: " << last.second << endl;
+                } else {
+                    cout << "No history to undo.\n";
+                }
+                break;
+            case 5:
+                if (!processingQueue.empty()) {
+                    cout << "Processing student: " << processingQueue.front() << endl;
+                    processingQueue.pop();
+                } else {
+                    cout << "No students in processing queue.\n";
+                }
+                break;
+            case 0:
+                cout << "Exiting program.\n";
+                return 0;
+            default:
+                cout << "Invalid choice. Please try again.\n";
+        }
+    }
+}
